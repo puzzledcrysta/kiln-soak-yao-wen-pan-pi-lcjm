@@ -24,7 +24,8 @@ function filterTable() {
   const query = filter.value.trim().toLocaleLowerCase();
   const selected = rows.filter(row => {
     if (stage === 'reconcile' && differences.checked && row.code === 'MATCH') return false;
-    return !query || [row.key,row.id,row.line,row.code,settings.reasons[row.code],row.detail,row.note,row.kind]
+    return !query || [row.key,row.id,row.line,row.code,settings.reasons[row.code],row.detail,row.note,row.kind,
+      ...(row.zones || []).map(zone => `${zone.zone} ${zone.probes.join('+')}`)]
       .some(value => String(value ?? '').toLocaleLowerCase().includes(query));
   });
   byId('shown').textContent = `${selected.length} / ${rows.length}`;
@@ -82,8 +83,12 @@ function inspect(row) {
   button.type = 'button';
   button.addEventListener('click', () => showEvidence(row));
   const raw = evidence('原始字段', row.raw);
+  const zones = (row.zones || []).map(zone =>
+    `${zone.zone} · ${zone.probes.join('+')}探头 · 最长 ${zone.longest} 分钟${zone.notes.length ? ' · ' + zone.notes.join('；') : ''}`);
   const cell = el('div');
-  cell.append(button, raw);
+  cell.append(button);
+  if (zones.length) cell.append(evidence('分区与探头', zones));
+  cell.append(raw);
   return cell;
 }
 
@@ -96,9 +101,12 @@ function setRun(report) {
   byId('run-id').title = id;
   topExport.hidden = false;
   topExport.href = `/api/export/${id}`;
-  const values = {...result.counts, delta: result.book.delta, mismatched: result.book.mismatched};
+  const values = {...result.counts, delta: result.book.delta, mismatched: result.book.mismatched,
+    blocked: (result.blocked || []).length};
   for (const cell of document.querySelectorAll('[data-count]')) cell.textContent = values[cell.dataset.count];
-  live.textContent = `批次 ${id.slice(0, 9)} · ${result.balanced ? '记录已对齐' : '记录数不符'}`;
+  const gate = (result.blocked || []).length;
+  live.textContent = `批次 ${id.slice(0, 9)} · ${result.balanced ? '记录已对齐' : '记录数不符'}`
+    + (gate ? ` · ${gate} 单交接未成证，不能确认` : '');
 }
 
 async function render() {
@@ -118,7 +126,20 @@ async function render() {
   try {
     let view, rows;
     if (stage === 'domain') {
-      view = [key, [`最长保温 · ${settings.unit}`, 'amount', 'num'], line, ['明细依据', inspect]];
+      const held = new Map((result.blocked || []).map(item => [item.key, item]));
+      view = [key, [`共同保温 · ${settings.unit}`, 'amount', 'num'],
+              ['分区 / 探头', row => (row.zones || []).map(zone =>
+                `${zone.zone} ${zone.probes.join('+')} · ${zone.longest}`).join('；')],
+              ['交接', row => {
+                const notes = (row.zones || []).flatMap(zone => zone.notes.filter(note => note.includes('→')));
+                if (!notes.length) return '—';
+                const bad = notes.some(note => note.includes('不能续算') || note.includes('矛盾'));
+                return el('span', notes.join('；'), bad ? 'state problem' : 'state');
+              }],
+              ['要求', 'required', 'num'],
+              ['结论', row => held.has(row.key) ? tag(held.get(row.key).code)
+                : tag(row.short ? 'SOAK_SHORT' : 'MATCH')],
+              line, ['明细依据', inspect]];
       rows = result.accepted;
     } else if (stage === 'quality') {
       view = [key, line, ['判定', row => tag(row.code)], ['说明', 'detail'], ['字段', raw]];
@@ -188,10 +209,9 @@ window.addEventListener('hashchange', () => {
   selected = Object.hasOwn(settings.tabs, location.hash.slice(1)) ? location.hash.slice(1) : 'domain';
   render();
 });
-byId('sample').addEventListener('click', async () => {
-  const paths = ['shift', 'external'];
+async function loadSample(names, label) {
   try {
-    const responses = await Promise.all(paths.map(name => fetch(`/api/samples/${name}`)));
+    const responses = await Promise.all(names.map(name => fetch(`/api/samples/${name}`)));
     if (responses.some(item => !item.ok)) throw Error('样例暂时不可用');
     const files = await Promise.all(responses.map(item => item.arrayBuffer()));
     for (const [index,name] of ['source','book'].entries()) {
@@ -202,9 +222,11 @@ byId('sample').addEventListener('click', async () => {
     byId('source-file').value = '';
     byId('book-file').value = '';
     document.querySelector('#source details').open = true;
-    notice('样例已载入');
+    notice(`${label}已载入`);
   } catch (error) { notice(error.message, true); }
-});
+}
+byId('sample').addEventListener('click', () => loadSample(['shift', 'external'], '样例'));
+byId('zones-sample').addEventListener('click', () => loadSample(['zones', 'zones_external'], '分区样例'));
 for (const name of ['source','book']) {
   byId(`${name}-file`).addEventListener('change', async event => {
     const file = event.target.files[0];

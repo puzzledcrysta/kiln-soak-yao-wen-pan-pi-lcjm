@@ -2,7 +2,7 @@
 
 陶瓷厂烧成质检员可用本地工作台处理烧成单，复查连续保温段并与独立清单逐笔核对。
 
-线性插值定位达温和掉温时刻，缺测跨距切断连续保温，按最长连续段判批。
+线性插值定位达温和掉温时刻，缺测跨距切断连续保温，按最长连续段判批。同一烧成单可按分区、按主备探头分别报送温程：各区取共同连续达温的最长时段判批，主备交接须有两支探头同刻读数作证，否则交接两侧不拼接，掉温不会被当成连续保温。跨区或交接的单共同保温不足、与外部账不符时进入「待补证」，复核不能确认。旧版单探头烧成单照常复算。
 
 ## 启动
 
@@ -28,4 +28,4 @@ docker compose config --quiet
 docker compose exec -T app pytest -q
 ```
 
-`sample_data/shift.csv` 是班次数据，`sample_data/external.csv` 是独立账样例。`cases.csv` 固定业务反例，`legacy.csv` 和 `truncated.csv` 用于验证历史格式与断行。
+`sample_data/shift.csv` 是班次数据，`sample_data/external.csv` 是独立账样例。`sample_data/zones.csv` 与 `sample_data/zones_external.csv` 是分区主备样例，覆盖续算、无旁证、判断矛盾、共同达温与账差。`cases.csv` 固定业务反例，`legacy.csv` 和 `truncated.csv` 用于验证历史格式与断行。

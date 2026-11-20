@@ -25,6 +25,7 @@
 <div class="kpi"><small>有效</small><strong data-count="accepted">—</strong><span>条</span></div>
 <div class="kpi"><small>隔离</small><strong data-count="rejected">—</strong><span>条</span></div>
 <div class="kpi"><small>账差</small><strong data-count="mismatched">—</strong><span>条</span></div>
+<div class="kpi"><small>待补证</small><strong data-count="blocked">—</strong><span>单</span></div>
 <div class="kpi"><small>净差</small><strong data-count="delta">—</strong><span>分钟</span></div>
         </section>
         <div class="grid">
@@ -32,7 +33,8 @@
       <div class="panel__head"><h2 id="input-title">温程记录</h2><small>CSV</small></div>
       <form id="source" class="panel__body">
         <div class="actions"><button type="submit" class="btn btn--primary">运行保温判批</button>
-        <button type="button" id="sample" class="btn">载入样例</button></div>
+        <button type="button" id="sample" class="btn">载入样例</button>
+        <button type="button" id="zones-sample" class="btn">载入分区样例</button></div>
         <details><summary>导入来源与外部账</summary>
           <label>来源文件 <input id="source-file" type="file" accept=".csv,text/csv"></label>
           <textarea id="source-csv" aria-label="原始记录 CSV" rows="4"></textarea>

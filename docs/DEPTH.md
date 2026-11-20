@@ -11,7 +11,7 @@
 | M1 温程采信 | 检查编码、字段宽度和来源行 | `POST /api/intake` | `app/modules/intake/service.py` | `tests/test_intake.py` |
 | M2 测点契约 | 归一修订、业务键和偏移时间 | `POST /api/contract` | `app/modules/contract/service.py` | `tests/test_contract.py` |
 | M3 异常窑单 | 定位重复、被替代与矛盾来源 | `POST /api/quality` | `app/modules/quality/versions.py` | `tests/test_quality.py` |
-| M4 保温判批 | 按规则复算并追溯证据 | `POST /api/domain` | `app/modules/domain/rule.py` | `tests/test_domain.py` |
+| M4 保温判批 | 按区、按主备探头复算并追溯证据 | `POST /api/domain` | `app/modules/domain/rule.py` | `tests/test_domain.py`、`tests/test_zones.py` |
 | M5 窑批勾稽 | 核对独立清单和各类差异 | `POST /api/reconcile` | `app/modules/reconcile/service.py` | `tests/test_reconcile.py` |
 | M6 烧成批次 | 打开历史批次并对原文件复跑 | `POST /api/runs` | `app/modules/runs/service.py` | `tests/test_runs.py` |
 | M7 签批证据 | 登记复核结论并下载证据 | `POST /api/review/{run_id}` | `app/modules/review/decisions.py` | `tests/test_review.py` |
@@ -35,7 +35,13 @@
 | TRAP-26 | 陈旧复核版本拒绝 | 测试构造 | `app/modules/review/decisions.py` | `tests/test_review.py::test_stale` |
 | TRAP-101 | gap | cases.csv | `app/modules/domain/rule.py` | `tests/test_domain.py::test_gap` |
 | TRAP-15 | fahrenheit | cases.csv | `app/modules/domain/rule.py` | `tests/test_domain.py::test_fahrenheit` |
+| TRAP-31 | 主备交接无同刻旁证，掉温不得拼接 | zones.csv | `app/modules/domain/rule.py` | `tests/test_zones.py::test_gap_between_probes_is_not_spliced` |
+| TRAP-32 | 交接同刻两探头达温判断矛盾 | zones.csv | `app/modules/domain/rule.py` | `tests/test_zones.py::test_disagreeing_probes_do_not_prove_soak` |
+| TRAP-33 | 各区共同连续达温取交集，非累计 | zones.csv | `app/modules/domain/rule.py` | `tests/test_zones.py::test_common_soak_is_the_shortest_zone` |
+| TRAP-34 | 多区单的统一版本号下每区一行，非重复传输 | zones.csv | `app/modules/quality/versions.py` | `tests/test_zones.py::test_same_revision_profiles_coexist` |
 
 ## 对账
 
 输入 = 计入 + 隔离 + 重传及版本替换 + 空白记录 + 重复表头。按业务键全外连接，缺失一侧与数值为零分别登记。逐笔差值与总差一致。
+
+计入按温程行计，判批与对账按烧成单计：一张单可含多区、每区主备两行，仍只产生一条判批结果与一条外部账比对。跨区、跨主备交接的单，共同保温不足或与外部账不符时列入「待补证」，不能确认。

@@ -51,7 +51,8 @@ class Review(BaseModel):
 
 
 def read_sample(name):
-    choices = {'shift':'shift.csv','external':'external.csv'}
+    choices = {'shift':'shift.csv','external':'external.csv',
+               'zones':'zones.csv','zones_external':'zones_external.csv'}
     if name not in choices:
         raise DataError('DEMO_UNKNOWN','没有此样例',404)
     return SAMPLE_ROOT.joinpath(choices[name]).read_bytes()

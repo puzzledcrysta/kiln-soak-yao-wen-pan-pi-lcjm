@@ -11,4 +11,4 @@ REASONS = {
     'REVIEW_NOTE': '有差异时须填写复核意见', 'REVIEW_DECISION': '复核结论无效',
 }
 
-REASONS.update({'TEMP_SCALE': '温标错误', 'TEMP_POINT': '测点格式', 'TEMP_CONFLICT': '同刻温度冲突', 'TEMP_COVERAGE': '测温覆盖不足', 'DATE': '日期格式无效', 'REV_BLOCKED': '较新来源尚未采信'})
+REASONS.update({'TEMP_SCALE': '温标错误', 'TEMP_POINT': '测点格式', 'TEMP_CONFLICT': '同刻温度冲突', 'TEMP_COVERAGE': '测温覆盖不足', 'DATE': '日期格式无效', 'REV_BLOCKED': '较新来源尚未采信', 'PROBE': '探头标识无效', 'SOAK_SHORT': '共同保温时长不足', 'HOLD_BOOK': '共同保温与外部账不符', 'HANDOVER': '交接未成证，不能确认'})
